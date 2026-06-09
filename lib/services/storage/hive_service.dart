@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../models/expense/expense_hive_model.dart';
@@ -737,14 +739,24 @@ class HiveService {
   }
 
   Receivable _receivableFromMap(Map<String, dynamic> map) {
+    final settlementsRaw = map['settlements'] as List<dynamic>? ?? [];
+    final settlements = settlementsRaw
+        .whereType<Map>()
+        .map(ReceivableSettlement.fromJson)
+        .toList();
+    final amount = (map['amount'] as num).toDouble();
     return Receivable(
       id: map['id'] as String,
       userId: map['userId'] as String? ?? '',
       fromPerson: map['fromPerson'] as String? ?? 'Unknown',
-      amount: (map['amount'] as num).toDouble(),
+      amount: amount,
+      remainingAmount: map['remainingAmount'] == null
+          ? amount
+          : (map['remainingAmount'] as num).toDouble(),
       description: map['description'] as String?,
       dueDate: DateTime.parse(map['dueDate'] as String),
       isPaid: map['isPaid'] as bool? ?? false,
+      settlements: settlements,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: map['updatedAt'] == null
           ? null
@@ -812,28 +824,49 @@ class HiveService {
   }
 
   Receivable _hiveToReceivable(ReceivableHive hive) {
+    List<ReceivableSettlement> settlements = const [];
+    if (hive.settlementsJson != null && hive.settlementsJson!.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(hive.settlementsJson!) as List<dynamic>;
+        settlements = decoded
+            .whereType<Map>()
+            .map(ReceivableSettlement.fromJson)
+            .toList();
+      } catch (_) {
+        settlements = const [];
+      }
+    }
     return Receivable(
       id: hive.id,
       userId: hive.userId,
       fromPerson: hive.fromPerson,
       amount: hive.amount,
+      remainingAmount: hive.remainingAmount ?? hive.amount,
       description: hive.description,
       dueDate: hive.dueDate,
       isPaid: hive.isPaid,
+      settlements: settlements,
       createdAt: hive.createdAt,
       updatedAt: hive.updatedAt,
     );
   }
 
   ReceivableHive _receivableToHive(Receivable receivable) {
+    final settlementsJson = receivable.settlements.isEmpty
+        ? null
+        : jsonEncode(
+            receivable.settlements.map((s) => s.toJson()).toList(),
+          );
     return ReceivableHive(
       id: receivable.id,
       userId: receivable.userId,
       fromPerson: receivable.fromPerson,
       amount: receivable.amount,
+      remainingAmount: receivable.remainingAmount,
       description: receivable.description,
       dueDate: receivable.dueDate,
       isPaid: receivable.isPaid,
+      settlementsJson: settlementsJson,
       createdAt: receivable.createdAt,
       updatedAt: receivable.updatedAt,
     );
@@ -860,9 +893,11 @@ class HiveService {
       'userId': receivable.userId,
       'fromPerson': receivable.fromPerson,
       'amount': receivable.amount,
+      'remainingAmount': receivable.remainingAmount,
       'description': receivable.description,
       'dueDate': receivable.dueDate.toIso8601String(),
       'isPaid': receivable.isPaid,
+      'settlements': receivable.settlements.map((s) => s.toJson()).toList(),
       'createdAt': receivable.createdAt.toIso8601String(),
       'updatedAt': receivable.updatedAt?.toIso8601String(),
     };

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/receivable/receivable_model.dart';
 import '../../../providers/storage/storage_providers.dart';
 
-enum ReceivableStatus { pending, paid, overdue }
+enum ReceivableStatus { pending, partial, paid, overdue }
 
-enum ReceivableStatusFilter { all, pending, paid, overdue }
+enum ReceivableStatusFilter { all, pending, partial, paid, overdue }
 
 class ReceivablesListState {
   final ReceivableStatusFilter filter;
@@ -45,7 +45,7 @@ class ReceivablesStats {
 }
 
 ReceivableStatus receivableStatus(Receivable receivable) {
-  if (receivable.isPaid) {
+  if (receivable.isPaid || receivable.remainingAmount <= 0) {
     return ReceivableStatus.paid;
   }
 
@@ -57,8 +57,13 @@ ReceivableStatus receivableStatus(Receivable receivable) {
   );
   final todayOnly = DateTime(today.year, today.month, today.day);
 
+  final hasPartialSettlement = receivable.settlements.isNotEmpty;
+
   if (dueDate.isBefore(todayOnly)) {
     return ReceivableStatus.overdue;
+  }
+  if (hasPartialSettlement) {
+    return ReceivableStatus.partial;
   }
   return ReceivableStatus.pending;
 }
@@ -95,6 +100,8 @@ final filteredReceivablesProvider = Provider.family<List<Receivable>, String>((
     switch (filter) {
       case ReceivableStatusFilter.pending:
         return status == ReceivableStatus.pending;
+      case ReceivableStatusFilter.partial:
+        return status == ReceivableStatus.partial;
       case ReceivableStatusFilter.paid:
         return status == ReceivableStatus.paid;
       case ReceivableStatusFilter.overdue:
@@ -116,11 +123,12 @@ final receivablesStatsProvider = Provider.family<ReceivablesStats, String>((
       .toList();
 
   final totalOwed = receivables
-      .where((receivable) => !receivable.isPaid)
-      .fold(0.0, (sum, receivable) => sum + receivable.amount);
-  final collectedAmount = receivables
-      .where((receivable) => receivable.isPaid)
-      .fold(0.0, (sum, receivable) => sum + receivable.amount);
+      .where((r) => !r.isPaid && r.remainingAmount > 0)
+      .fold(0.0, (sum, r) => sum + r.remainingAmount);
+  final collectedAmount = receivables.fold(
+    0.0,
+    (sum, r) => sum + (r.amount - r.remainingAmount),
+  );
   final overdueCount = receivables
       .where(
         (receivable) =>
@@ -147,7 +155,9 @@ int _statusSortWeight(ReceivableStatus status) {
       return 0;
     case ReceivableStatus.pending:
       return 1;
-    case ReceivableStatus.paid:
+    case ReceivableStatus.partial:
       return 2;
+    case ReceivableStatus.paid:
+      return 3;
   }
 }

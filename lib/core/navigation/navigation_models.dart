@@ -13,6 +13,8 @@ String getTabId(NavigationTab tab) {
       return 'receivables';
     case NavigationTab.payables:
       return 'payables';
+    case NavigationTab.history:
+      return 'history';
     case NavigationTab.settings:
       return 'settings';
   }
@@ -40,6 +42,7 @@ enum NavigationTab {
   analytics,
   receivables,
   payables,
+  history,
   settings,
 }
 
@@ -57,6 +60,8 @@ extension NavigationTabExtension on NavigationTab {
         return 'Receivables';
       case NavigationTab.payables:
         return 'Payables';
+      case NavigationTab.history:
+        return 'History';
       case NavigationTab.settings:
         return 'Settings';
     }
@@ -74,6 +79,8 @@ extension NavigationTabExtension on NavigationTab {
         return Icons.handshake_rounded;
       case NavigationTab.payables:
         return Icons.payments_rounded;
+      case NavigationTab.history:
+        return Icons.history_rounded;
       case NavigationTab.settings:
         return Icons.settings_rounded;
     }
@@ -101,5 +108,6 @@ final List<NavigationItem> navigationItems = [
   NavigationTab.analytics,
   NavigationTab.receivables,
   NavigationTab.payables,
+  NavigationTab.history,
   NavigationTab.settings,
 ].map((tab) => tab.toItem()).toList();

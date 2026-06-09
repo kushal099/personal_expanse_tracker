@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/expense/expense_model.dart';
 import '../../models/recurring/recurring_expense_template.dart';
 import '../../models/receivable/receivable_model.dart';
+// ReceivableSettlement is part of receivable_model.dart
 import '../../models/payable/payable_model.dart';
 import '../../services/storage/hive_service.dart';
 import '../auth/auth_provider.dart';
@@ -190,19 +191,68 @@ class ReceivablesNotifier extends StateNotifier<ReceivablesState> {
     }
   }
 
-  Future<void> markReceivablePaid(String id) async {
-    Receivable? existing;
-    for (final receivable in state.receivables) {
-      if (receivable.id == id) {
-        existing = receivable;
-        break;
-      }
+  Future<void> markReceivablePaid(String id, {String? note}) async {
+    final existing = _findReceivableById(id);
+    if (existing == null) return;
+    await addReceivableSettlement(
+      id,
+      existing.remainingAmount,
+      note: note,
+      settledAt: DateTime.now(),
+    );
+  }
+
+  Future<void> addReceivableSettlement(
+    String id,
+    double amount, {
+    String? note,
+    DateTime? settledAt,
+  }) async {
+    final existing = _findReceivableById(id);
+    if (existing == null || amount <= 0) return;
+    final next = _applyReceivableSettlement(
+      existing,
+      amount: amount,
+      note: note,
+      settledAt: settledAt ?? DateTime.now(),
+    );
+    await updateReceivable(id, next);
+  }
+
+  Receivable? _findReceivableById(String id) {
+    for (final r in state.receivables) {
+      if (r.id == id) return r;
     }
-    if (existing == null) {
-      return;
-    }
-    final updated = existing.copyWith(isPaid: true, updatedAt: DateTime.now());
-    await updateReceivable(id, updated);
+    return null;
+  }
+
+  Receivable _applyReceivableSettlement(
+    Receivable receivable, {
+    required double amount,
+    String? note,
+    required DateTime settledAt,
+  }) {
+    final settled = amount > receivable.remainingAmount
+        ? receivable.remainingAmount
+        : amount;
+    final remaining = (receivable.remainingAmount - settled).clamp(
+      0.0,
+      double.infinity,
+    );
+    final isPaid = remaining <= 0;
+    final settlement = ReceivableSettlement(
+      id: 'settle_${settledAt.microsecondsSinceEpoch}',
+      amount: settled,
+      remainingAfter: remaining,
+      note: note?.trim().isEmpty ?? true ? null : note?.trim(),
+      settledAt: settledAt,
+    );
+    return receivable.copyWith(
+      remainingAmount: remaining,
+      isPaid: isPaid,
+      settlements: [...receivable.settlements, settlement],
+      updatedAt: settledAt,
+    );
   }
 
   Future<void> deleteReceivable(String id) async {

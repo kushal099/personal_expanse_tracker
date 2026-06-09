@@ -8,6 +8,7 @@ import '../screens/expenses/expenses_screen.dart';
 import '../screens/analytics/analytics_screen.dart';
 import '../screens/receivables/receivables_screen.dart';
 import '../screens/payables/payables_screen.dart';
+import '../screens/history/history_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import 'desktop_sidebar.dart';
 import 'mobile_bottom_navigation.dart';
@@ -59,6 +60,8 @@ class AppShell extends ConsumerWidget {
         return const ReceivablesScreen();
       case 'payables':
         return const PayablesScreen();
+      case 'history':
+        return const HistoryScreen();
       case 'settings':
         return const SettingsScreen();
       default:

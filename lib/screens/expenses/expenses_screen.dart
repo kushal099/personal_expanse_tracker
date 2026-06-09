@@ -5,7 +5,6 @@ import '../../models/expense/expense_model.dart';
 import '../../models/recurring/recurring_expense_template.dart';
 import '../../providers/auth/auth_provider.dart';
 import '../../providers/storage/storage_providers.dart';
-import '../../providers/sync/sync_providers.dart';
 import '../../utils/formatters/formatters.dart';
 import '../settings/providers/settings_providers.dart';
 import 'providers/expenses_providers.dart';
@@ -49,17 +48,15 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
       appBar: AppBar(
         title: const Text('Expenses'),
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(syncProvider.notifier).syncNow(),
-          ),
-        ],
+
       ),
       body: expensesState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: () => ref.read(syncProvider.notifier).syncNow(),
+              onRefresh: () async {
+                final userId2 = ref.read(currentUserIdProvider) ?? '';
+                ref.read(expensesProvider.notifier).refresh(userId2);
+              },
               child: Scrollbar(
                 child: CustomScrollView(
                   slivers: [

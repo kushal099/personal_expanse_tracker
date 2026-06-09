@@ -26,13 +26,15 @@ class ReceivableHiveAdapter extends TypeAdapter<ReceivableHive> {
       isPaid: fields[6] as bool,
       createdAt: fields[7] as DateTime,
       updatedAt: fields[8] as DateTime?,
+      remainingAmount: fields[9] as double?,
+      settlementsJson: fields[10] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ReceivableHive obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +52,11 @@ class ReceivableHiveAdapter extends TypeAdapter<ReceivableHive> {
       ..writeByte(7)
       ..write(obj.createdAt)
       ..writeByte(8)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(9)
+      ..write(obj.remainingAmount)
+      ..writeByte(10)
+      ..write(obj.settlementsJson);
   }
 
   @override

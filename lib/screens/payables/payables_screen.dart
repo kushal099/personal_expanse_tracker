@@ -42,14 +42,7 @@ class _PayablesScreenState extends ConsumerState<PayablesScreen> {
       appBar: AppBar(
         title: const Text('Payables'),
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () =>
-                ref.read(payablesProvider.notifier).fetchPayables(userId),
-          ),
-          const SizedBox(width: 12),
-        ],
+
       ),
       body: payablesState.isLoading
           ? const Center(child: CircularProgressIndicator())

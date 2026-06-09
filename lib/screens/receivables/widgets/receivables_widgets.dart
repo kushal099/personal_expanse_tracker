@@ -145,6 +145,8 @@ class ReceivableCard extends StatelessWidget {
   final Receivable receivable;
   final ReceivableStatus status;
   final VoidCallback onMarkPaid;
+  final VoidCallback onSettle;
+  final VoidCallback onHistory;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -153,6 +155,8 @@ class ReceivableCard extends StatelessWidget {
     required this.receivable,
     required this.status,
     required this.onMarkPaid,
+    required this.onSettle,
+    required this.onHistory,
     required this.onEdit,
     required this.onDelete,
   });
@@ -198,6 +202,8 @@ class ReceivableCard extends StatelessWidget {
           final actions = _ReceivableActions(
             isPaid: isPaid,
             onMarkPaid: onMarkPaid,
+            onSettle: onSettle,
+            onHistory: onHistory,
             onEdit: onEdit,
             onDelete: onDelete,
           );
@@ -231,6 +237,8 @@ class ReceivableCard extends StatelessWidget {
         return colorScheme.error;
       case ReceivableStatus.paid:
         return colorScheme.tertiary;
+      case ReceivableStatus.partial:
+        return colorScheme.secondary;
       case ReceivableStatus.pending:
         return colorScheme.primary;
     }
@@ -286,7 +294,7 @@ class _ReceivableDetails extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    AppFormatters.formatCurrency(receivable.amount),
+                    AppFormatters.formatCurrency(receivable.remainingAmount),
                     style: theme.textTheme.titleSmall?.copyWith(
                       color: isPaid
                           ? colorScheme.onSurfaceVariant
@@ -296,6 +304,15 @@ class _ReceivableDetails extends StatelessWidget {
                   ),
                 ],
               ),
+              if (receivable.remainingAmount < receivable.amount) ...[
+                const SizedBox(height: 2),
+                Text(
+                  'Total ${AppFormatters.formatCurrency(receivable.amount)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
@@ -335,6 +352,8 @@ class _ReceivableDetails extends StatelessWidget {
         return Icons.priority_high_rounded;
       case ReceivableStatus.paid:
         return Icons.check_rounded;
+      case ReceivableStatus.partial:
+        return Icons.hourglass_bottom_rounded;
       case ReceivableStatus.pending:
         return Icons.schedule_rounded;
     }
@@ -345,7 +364,9 @@ class _ReceivableDetails extends StatelessWidget {
       case ReceivableStatus.overdue:
         return 'Overdue';
       case ReceivableStatus.paid:
-        return 'Paid';
+        return 'Collected';
+      case ReceivableStatus.partial:
+        return 'Partial';
       case ReceivableStatus.pending:
         return 'Pending';
     }
@@ -380,12 +401,16 @@ class _StatusPill extends StatelessWidget {
 class _ReceivableActions extends StatelessWidget {
   final bool isPaid;
   final VoidCallback onMarkPaid;
+  final VoidCallback onSettle;
+  final VoidCallback onHistory;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _ReceivableActions({
     required this.isPaid,
     required this.onMarkPaid,
+    required this.onSettle,
+    required this.onHistory,
     required this.onEdit,
     required this.onDelete,
   });
@@ -396,13 +421,13 @@ class _ReceivableActions extends StatelessWidget {
 
     return Wrap(
       spacing: 6,
+      runSpacing: 6,
       children: [
         if (!isPaid)
-          IconButton.filledTonal(
-            onPressed: onMarkPaid,
-            icon: const Icon(Icons.check_rounded),
-            tooltip: 'Mark paid',
-          ),
+          FilledButton.tonal(onPressed: onSettle, child: const Text('Settle')),
+        if (!isPaid)
+          TextButton(onPressed: onMarkPaid, child: const Text('Mark paid')),
+        TextButton(onPressed: onHistory, child: const Text('History')),
         IconButton(
           onPressed: onEdit,
           icon: const Icon(Icons.edit_rounded),
@@ -453,8 +478,10 @@ class ReceivablesFilterBar extends StatelessWidget {
         return 'All';
       case ReceivableStatusFilter.pending:
         return 'Pending';
+      case ReceivableStatusFilter.partial:
+        return 'Partial';
       case ReceivableStatusFilter.paid:
-        return 'Paid';
+        return 'Collected';
       case ReceivableStatusFilter.overdue:
         return 'Overdue';
     }

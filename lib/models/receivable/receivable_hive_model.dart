@@ -31,6 +31,14 @@ class ReceivableHive {
   @HiveField(8)
   final DateTime? updatedAt;
 
+  /// Remaining amount after settlements (null = full amount still owed)
+  @HiveField(9)
+  final double? remainingAmount;
+
+  /// JSON-encoded list of ReceivableSettlement objects
+  @HiveField(10)
+  final String? settlementsJson;
+
   ReceivableHive({
     required this.id,
     required this.userId,
@@ -41,6 +49,8 @@ class ReceivableHive {
     required this.isPaid,
     required this.createdAt,
     this.updatedAt,
+    this.remainingAmount,
+    this.settlementsJson,
   });
 
   ReceivableHive copyWith({
@@ -53,6 +63,8 @@ class ReceivableHive {
     bool? isPaid,
     DateTime? createdAt,
     DateTime? updatedAt,
+    double? remainingAmount,
+    String? settlementsJson,
   }) {
     return ReceivableHive(
       id: id ?? this.id,
@@ -64,6 +76,8 @@ class ReceivableHive {
       isPaid: isPaid ?? this.isPaid,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      remainingAmount: remainingAmount ?? this.remainingAmount,
+      settlementsJson: settlementsJson ?? this.settlementsJson,
     );
   }
 }

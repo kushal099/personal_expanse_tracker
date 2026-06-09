@@ -5,7 +5,9 @@ import '../../models/receivable/receivable_model.dart';
 import '../../providers/storage/storage_providers.dart';
 import '../../providers/auth/auth_provider.dart';
 import 'providers/receivables_providers.dart';
+import 'widgets/receivable_history_sheet.dart';
 import 'widgets/receivable_modal.dart';
+import 'widgets/receivable_settlement_modal.dart';
 import 'widgets/receivables_widgets.dart';
 
 /// Receivables screen - track money owed to user
@@ -38,18 +40,7 @@ class _ReceivablesScreenState extends ConsumerState<ReceivablesScreen> {
     final isDesktop = MediaQuery.of(context).size.width >= 900;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Receivables'),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () =>
-                ref.read(receivablesProvider.notifier).fetchReceivables(userId),
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Receivables'), elevation: 0),
       body: receivablesState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -146,6 +137,16 @@ class _ReceivablesScreenState extends ConsumerState<ReceivablesScreen> {
                                     receivable: receivable,
                                     status: receivableStatus(receivable),
                                     onMarkPaid: () => _markPaid(receivable),
+                                    onSettle: () =>
+                                        showReceivableSettlementModal(
+                                          context,
+                                          receivable: receivable,
+                                        ),
+                                    onHistory: () =>
+                                        showReceivableHistorySheet(
+                                          context,
+                                          receivable: receivable,
+                                        ),
                                     onEdit: () => showEditReceivableModal(
                                       context,
                                       receivable: receivable,
@@ -168,6 +169,16 @@ class _ReceivablesScreenState extends ConsumerState<ReceivablesScreen> {
                                     receivable: receivable,
                                     status: receivableStatus(receivable),
                                     onMarkPaid: () => _markPaid(receivable),
+                                    onSettle: () =>
+                                        showReceivableSettlementModal(
+                                          context,
+                                          receivable: receivable,
+                                        ),
+                                    onHistory: () =>
+                                        showReceivableHistorySheet(
+                                          context,
+                                          receivable: receivable,
+                                        ),
                                     onEdit: () => showEditReceivableModal(
                                       context,
                                       receivable: receivable,
@@ -196,11 +207,9 @@ class _ReceivablesScreenState extends ConsumerState<ReceivablesScreen> {
     await ref
         .read(receivablesProvider.notifier)
         .markReceivablePaid(receivable.id);
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${receivable.fromPerson} marked as paid')),
+      SnackBar(content: Text('${receivable.fromPerson} marked as collected')),
     );
   }
 
@@ -228,16 +237,12 @@ class _ReceivablesScreenState extends ConsumerState<ReceivablesScreen> {
       ),
     );
 
-    if (confirmed != true) {
-      return;
-    }
+    if (confirmed != true) return;
 
     await ref
         .read(receivablesProvider.notifier)
         .deleteReceivable(receivable.id);
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Receivable deleted'),
