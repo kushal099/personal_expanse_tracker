@@ -1,0 +1,35 @@
+
+# 2026-05-11 19:34:48.126941
++N
+
+# 2026-05-11 19:35:15.563457
++D
+
+# 2026-05-11 19:35:20.069324
++N
+
+# 2026-05-11 19:36:08.023265
++Read the entire Flutter project structure first.
++
++Understand:
++- Riverpod architecture
++- Hive persistence flow
++- analytics pipeline
++- dashboard providers
++- expenses flow
++- receivables system
++- export/backup system
++- reusable widget strategy
++- dark fintech theme
++- responsive layout strategy
++
++Do NOT modify files yet.
++
++Create a concise understanding of:
++- architecture
++- provider relationships
++- data flow
++- reactive update flow
++- Hive box usage
++- reusable components
++- potential technical debt
